@@ -1,0 +1,53 @@
+.topbar {
+  height: 60px;
+  background-color: #343a40; /* sombre, proche du sidebar */
+  border-bottom: 1px solid #495057; /* léger contraste */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  color: #f8f9fa; /* texte clair pour contraste */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.page-title {
+  margin: 0;
+  font-weight: 600;
+  color: #f8f9fa; /* titre blanc */
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.search {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #6c757d; /* couleur du champ assortie */
+  outline: none;
+  background-color: #495057; /* champ sombre */
+  color: #f8f9fa;
+}
+
+.search::placeholder {
+  color: #dee2e6;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.profile i {
+  font-size: 22px;
+  color: #0d6efd; /* bleu primaire ERP */
+}
+
+.username {
+  font-weight: 500;
+  color: #f8f9fa;
+}

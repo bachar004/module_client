@@ -1,0 +1,25 @@
+<div class="topbar">
+  <div class="left">
+    <h5 class="page-title">
+      <span *ngIf="currentUrl.includes('dashboard')">Dashboard</span>
+      <span *ngIf="currentUrl.includes('clients')">Clients</span>
+      <span *ngIf="currentUrl.includes('commandes')">Commandes</span>
+      <span *ngIf="currentUrl.includes('factures')">Factures</span>
+      <span *ngIf="currentUrl.includes('tickets')">Tickets</span>
+      <span *ngIf="currentUrl.includes('rapports')">Rapports</span>
+    </h5>
+  </div>
+  <div class="right">
+    <input
+      type="text"
+      class="search"
+      placeholder="Rechercher..."
+    />
+
+    <div class="profile">
+      <i class="bi bi-person-circle"></i>
+      <span class="username">Admin</span>
+    </div>
+  </div>
+</div>
+
