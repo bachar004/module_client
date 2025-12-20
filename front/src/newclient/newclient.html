@@ -1,1 +1,193 @@
-<p>newclient works!</p>
+<div class="container mt-4">
+
+  <!-- Titre -->
+  <div class="mb-4">
+    <h3 class="fw-bold">Ajouter un client</h3>
+    <p class="text-muted">Renseignez les informations du nouveau client</p>
+  </div>
+
+  <!-- Carte -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+        <form #client="ngForm" (ngSubmit)="ajoutclient(client)">
+
+  <!-- Infos personnelles -->
+  <h6 class="text-primary mb-3">Informations personnelles</h6>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label>Nom</label>
+      <input
+        class="form-control"
+        name="nom"
+        [(ngModel)]="addclient.nom"
+        required
+        minlength="2"
+        #nom="ngModel"
+      >
+      <div class="text-danger" *ngIf="nom.invalid && nom.touched">
+        Nom requis et minimum 2 caractères
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label>Prénom</label>
+      <input
+        class="form-control"
+        name="prenom"
+        [(ngModel)]="addclient.prenom"
+        required
+        minlength="2"
+        #prenom="ngModel"
+      >
+      <div class="text-danger" *ngIf="prenom.invalid && prenom.touched">
+        Prénom requis et minimum 2 caractères
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <h6 class="text-primary mt-3 mb-3">Coordonnées</h6>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+        <label>Email</label>
+        <input
+  type="email"
+  class="form-control"
+  name="email"
+  [(ngModel)]="addclient.email"
+  required
+  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+  #email="ngModel"
+/>
+<div class="text-danger" *ngIf="email.invalid && email.touched">
+  Email invalide
+</div>
+
+    </div>
+    <div class="col-md-6 mb-3">
+      <label>Téléphone</label>
+      <input
+        type="tel"
+        class="form-control"
+        name="telephone"
+        [(ngModel)]="addclient.telephone"
+        required
+        pattern="[0-9]{8,}"
+        #telephone="ngModel"
+      >
+      <div class="text-danger" *ngIf="telephone.invalid && telephone.touched">
+        Téléphone invalide (au moins 8 chiffres)
+      </div>
+    </div>
+  </div>
+
+  <!-- Adresse -->
+  <h6 class="text-primary mt-3 mb-3">Adresse</h6>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label>Rue</label>
+      <input
+        class="form-control"
+        name="rue"
+        [(ngModel)]="addclient.adresse.rue"
+        required
+        #rue="ngModel"
+      >
+      <div class="text-danger" *ngIf="rue.invalid && rue.touched">
+        Rue requise
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label>Ville</label>
+      <input
+        class="form-control"
+        name="ville"
+        [(ngModel)]="addclient.adresse.ville"
+        required
+        #ville="ngModel"
+      >
+      <div class="text-danger" *ngIf="ville.invalid && ville.touched">
+        Ville requise
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label>Code postal</label>
+      <input
+        class="form-control"
+        name="codePostal"
+        [(ngModel)]="addclient.adresse.codePostal"
+        required
+        #codePostal="ngModel"
+      >
+      <div class="text-danger" *ngIf="codePostal.invalid && codePostal.touched">
+        Code postal requis
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label>Pays</label>
+      <input
+        class="form-control"
+        name="pays"
+        [(ngModel)]="addclient.adresse.pays"
+        required
+        #pays="ngModel"
+      >
+      <div class="text-danger" *ngIf="pays.invalid && pays.touched">
+        Pays requis
+      </div>
+    </div>
+  </div>
+
+  <!-- Compte -->
+  <h6 class="text-primary mt-3 mb-3">Compte</h6>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label>Statut</label>
+      <select
+        class="form-select"
+        name="statut"
+        [(ngModel)]="addclient.statut"
+        required
+        #statut="ngModel"
+      >
+        <option value="actif">Actif</option>
+        <option value="inactif">Inactif</option>
+        <option value="suspendu">Suspendu</option>
+      </select>
+      <div class="text-danger" *ngIf="statut.invalid && statut.touched">
+        Statut requis
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label>Solde initial</label>
+      <input
+        type="number"
+        class="form-control"
+        name="soldeCompte"
+        [(ngModel)]="addclient.soldeCompte"
+        required
+        min="0"
+        #solde="ngModel"
+      >
+      <div class="text-danger" *ngIf="solde.invalid && solde.touched">
+        Solde valide (>=0)
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="d-flex justify-content-end mt-4">
+    <button type="button" class="btn btn-outline-secondary me-2" (click)="annuler(client)">
+      Annuler
+    </button>
+    <button type="submit" class="btn btn-primary" [disabled]="client.invalid">
+       Enregistrer
+    </button>
+  </div>
+
+</form>
+
+
+    </div>
+  </div>
+</div>
+
