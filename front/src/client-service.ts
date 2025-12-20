@@ -18,4 +18,7 @@ export class ClientService {
   chercherclient(query:string){
     return this.http.get(`${this.url}/search?query=${encodeURIComponent(query)}`);
   }
+  ajouterclient(data:any){
+    return this.http.post(`${this.url}/add`,data)  
+  }
 }
