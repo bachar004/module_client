@@ -1,0 +1,217 @@
+<div class="container-fluid p-4">
+  <div class="header-section mb-4">
+    <h2 class="page-title">
+      <i class="bi bi-plus-circle"></i> Nouvelle Commande
+    </h2>
+    <button class="btn btn-outline-secondary" (click)="annuler()">
+      <i class="bi bi-arrow-left"></i> Retour
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <div class="row">
+    <!-- Formulaire principal -->
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Informations de la commande</h5>
+        </div>
+        <div class="card-body">
+          <!-- Sélection client -->
+          <div class="mb-4">
+            <label class="form-label">Client *</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="commande.client"
+              [disabled]="loadingClients"
+            >
+              <option value="">-- Sélectionner un client --</option>
+              <option *ngFor="let client of clientsActifs" [value]="client._id">
+                {{ client.prenom }} {{ client.nom }} ({{ client.email }})
+              </option>
+            </select>
+            <small class="text-muted">
+              Seuls les clients actifs sont affichés
+            </small>
+          </div>
+
+          <!-- Ajout d'articles -->
+          <div class="article-form">
+            <h6 class="mb-3">
+              <i class="bi bi-box"></i> Ajouter des articles
+            </h6>
+            
+            <div class="row g-3 mb-3">
+              <div class="col-md-5">
+                <label class="form-label">Produit</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="nouvelArticle.produit"
+                  placeholder="Nom du produit"
+                />
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Quantité</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  [(ngModel)]="nouvelArticle.quantite"
+                  min="1"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Prix unitaire (DT)</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  [(ngModel)]="nouvelArticle.prixUnitaire"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button 
+                  class="btn btn-primary w-100" 
+                  (click)="ajouterArticle()"
+                >
+                  <i class="bi bi-plus"></i> Ajouter
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des articles -->
+          <div *ngIf="commande.articles.length > 0" class="articles-list mt-4">
+            <h6 class="mb-3">Articles ajoutés</h6>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Quantité</th>
+                  <th>Prix unitaire</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let article of commande.articles; let i = index">
+                  <td>{{ article.produit }}</td>
+                  <td>{{ article.quantite }}</td>
+                  <td>{{ article.prixUnitaire | number:'1.2-2' }} DT</td>
+                  <td class="fw-bold">{{ article.total | number:'1.2-2' }} DT</td>
+                  <td>
+                    <button 
+                      class="btn btn-sm btn-outline-danger" 
+                      (click)="supprimerArticle(i)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div *ngIf="commande.articles.length === 0" class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Aucun article ajouté pour le moment
+          </div>
+
+          <!-- Notes -->
+          <div class="mt-4">
+            <label class="form-label">Notes (optionnel)</label>
+            <textarea 
+              class="form-control" 
+              rows="3"
+              [(ngModel)]="commande.notes"
+              placeholder="Informations complémentaires sur la commande..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résumé -->
+    <div class="col-lg-4">
+      <div class="card summary-card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-receipt"></i> Résumé de la commande
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="summary-item">
+            <span class="summary-label">Client:</span>
+            <span class="summary-value">
+              <span *ngIf="commande.client">
+                {{ getClientName(commande.client) }}
+              </span>
+              <span *ngIf="!commande.client" class="text-muted">
+                Non sélectionné
+              </span>
+            </span>
+          </div>
+
+          <div class="summary-item">
+            <span class="summary-label">Articles:</span>
+            <span class="summary-value">
+              {{ commande.articles.length }}
+            </span>
+          </div>
+
+          <hr>
+
+          <div class="summary-total">
+            <span class="total-label">MONTANT TOTAL</span>
+            <span class="total-value">
+              {{ calculerMontantTotal() | number:'1.2-2' }} DT
+            </span>
+          </div>
+
+          <button 
+            class="btn btn-success w-100 mt-4" 
+            (click)="creerCommande()"
+            [disabled]="loading || commande.articles.length === 0 || !commande.client"
+          >
+            <span *ngIf="!loading">
+              <i class="bi bi-check-circle"></i> Créer la commande
+            </span>
+            <span *ngIf="loading">
+              <span class="spinner-border spinner-border-sm me-2"></span>
+              Création en cours...
+            </span>
+          </button>
+
+          <button 
+            class="btn btn-outline-secondary w-100 mt-2" 
+            (click)="annuler()"
+            [disabled]="loading"
+          >
+            <i class="bi bi-x-circle"></i> Annuler
+          </button>
+        </div>
+      </div>
+
+      <!-- Aide -->
+      <div class="card mt-3">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="bi bi-lightbulb"></i> Aide
+          </h6>
+          <small class="text-muted">
+            <ul class="mb-0 ps-3">
+              <li>Sélectionnez un client actif</li>
+              <li>Ajoutez au moins un article</li>
+              <li>Vérifiez le montant total</li>
+              <li>Cliquez sur "Créer la commande"</li>
+            </ul>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

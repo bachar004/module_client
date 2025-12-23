@@ -51,3 +51,20 @@
   font-weight: 500;
   color: #f8f9fa;
 }
+
+/* Bouton toggle seulement sur mobile */
+.menu-toggle {
+  display: none;
+  background-color: #212529;
+  color: white;
+  border: none;
+  font-size: 24px;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: inline-block;
+  }
+}
