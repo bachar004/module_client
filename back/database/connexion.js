@@ -2,9 +2,9 @@ const mongoose=require("mongoose")
 require("dotenv").config()
 
 mongoose.connect(process.env.DB_STRING).then(
-    console.log("connecteé!")
+    console.log("connecté!")
 ).catch((err)=>{
-    console.log('probelem de connexion ')
+    console.log('problème de connexion ')
 })
 
 module.exports=mongoose
