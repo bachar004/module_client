@@ -1,0 +1,247 @@
+<div class="container-fluid p-4">
+  <!-- En-tête -->
+  <div class="header-section mb-4">
+    <h2 class="page-title">
+      <i class="bi bi-credit-card"></i> Effectuer un Paiement
+    </h2>
+    <button class="btn btn-outline-secondary" (click)="retour()">
+      <i class="bi bi-arrow-left"></i> Retour
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <div *ngIf="success" class="alert alert-success alert-dismissible fade show">
+    {{ success }}
+    <button type="button" class="btn-close" (click)="success = ''"></button>
+  </div>
+
+  <div class="row">
+    <!-- Formulaire de paiement -->
+    <div class="col-lg-8">
+      <!-- Informations client -->
+      <div class="card mb-4" *ngIf="client">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-person"></i> Client
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-1">
+                <strong>Nom:</strong> {{ client.prenom }} {{ client.nom }}
+              </p>
+              <p class="mb-1">
+                <strong>Email:</strong> {{ client.email }}
+              </p>
+              <p class="mb-1" *ngIf="client.telephone">
+                <strong>Téléphone:</strong> {{ client.telephone }}
+              </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <div class="solde-display">
+                <span class="label">Solde du compte:</span>
+                <span class="value" [class.text-success]="client.soldeCompte > 0" 
+                      [class.text-danger]="client.soldeCompte < 0">
+                  {{ client.soldeCompte | number:'1.2-2' }} DT
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Factures impayées -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-file-text"></i> Factures Impayées
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="!loading && factures.length > 0" class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Numéro</th>
+                  <th>Date</th>
+                  <th>Montant Total</th>
+                  <th>Solde Restant</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let facture of factures">
+                  <td><strong>{{ facture.numeroFacture }}</strong></td>
+                  <td>{{ facture.dateFacture | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ facture.montantTotal | number:'1.2-2' }} DT</td>
+                  <td class="text-danger">
+                    <strong>{{ facture.soldeRestant | number:'1.2-2' }} DT</strong>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatutBadgeClass(facture.statut)">
+                      {{ getStatutLabel(facture.statut) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="3" class="text-end"><strong>Total à payer:</strong></td>
+                  <td class="text-danger" colspan="2">
+                    <strong>{{ calculerTotalImpaye() | number:'1.2-2' }} DT</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div *ngIf="!loading && factures.length === 0" class="alert alert-success">
+            <i class="bi bi-check-circle"></i> Aucune facture impayée pour ce client
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire de paiement -->
+      <div class="card" >
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-cash-coin"></i> Enregistrer un Paiement
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Montant du paiement (DT) *</label>
+              <input 
+                type="number" 
+                class="form-control form-control-lg" 
+                [(ngModel)]="paiement.montantPaiement"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+              <small class="text-muted">
+                Total impayé: {{ calculerTotalImpaye() | number:'1.2-2' }} DT
+              </small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Mode de paiement *</label>
+              <select class="form-select form-select-lg" [(ngModel)]="paiement.modePaiement">
+                <option value="especes">Espèces</option>
+                <option value="carte">Carte bancaire</option>
+                <option value="virement">Virement</option>
+                <option value="cheque">Chèque</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i>
+            <strong>Fonctionnement:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Le montant payé sera ajouté au solde du compte client</li>
+              <li>Les factures seront payées automatiquement par ordre de date</li>
+              <li>Si le montant dépasse le total des factures, l'excédent restera en crédit</li>
+            </ul>
+          </div>
+
+          <button 
+            class="btn btn-success btn-lg w-100 mt-3" 
+            (click)="effectuerPaiement()"
+            [disabled]="loadingPaiement || !paiement.montantPaiement || paiement.montantPaiement <= 0"
+          >
+            <span *ngIf="!loadingPaiement">
+              <i class="bi bi-check-circle"></i> Confirmer le paiement
+            </span>
+            <span *ngIf="loadingPaiement">
+              <span class="spinner-border spinner-border-sm me-2"></span>
+              Traitement en cours...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résumé -->
+    <div class="col-lg-4">
+      <!-- Résultat du dernier paiement -->
+      <div class="card mb-4" *ngIf="resultatPaiement">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-check-circle"></i> Paiement Effectué
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="result-row">
+            <span class="label">Montant reçu:</span>
+            <span class="value">{{ resultatPaiement.montant_recu | number:'1.2-2' }} DT</span>
+          </div>
+          <div class="result-row">
+            <span class="label">Ancien solde:</span>
+            <span class="value">{{ resultatPaiement.anciensolde | number:'1.2-2' }} DT</span>
+          </div>
+          <div class="result-row">
+            <span class="label">Nouveau solde:</span>
+            <span class="value text-success">
+              <strong>{{ resultatPaiement.nouveausolde | number:'1.2-2' }} DT</strong>
+            </span>
+          </div>
+
+          <hr>
+
+          <div *ngIf="resultatPaiement.facturesMisesAJour && resultatPaiement.facturesMisesAJour.length > 0">
+            <h6 class="mb-2">Factures mises à jour:</h6>
+            <div class="list-group list-group-flush">
+              <div class="list-group-item px-0" *ngFor="let f of resultatPaiement.facturesMisesAJour">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ f.numeroFacture }}</strong>
+                    <br>
+                    <small>
+                      <span class="badge" [ngClass]="getStatutBadgeClass(f.nouveauStatut)">
+                        {{ getStatutLabel(f.nouveauStatut) }}
+                      </span>
+                    </small>
+                  </div>
+                  <div class="text-end">
+                    <small class="text-muted">Payé:</small>
+                    <br>
+                    <strong class="text-success">{{ f.montantPaye | number:'1.2-2' }} DT</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aide -->
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="bi bi-lightbulb"></i> Information
+          </h6>
+          <small class="text-muted">
+            <ul class="mb-0 ps-3">
+              <li>Le paiement sera réparti automatiquement sur les factures impayées</li>
+              <li>Les factures les plus anciennes sont payées en premier</li>
+              <li>Le solde positif du client peut être utilisé pour de futurs paiements</li>
+            </ul>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

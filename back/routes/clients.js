@@ -84,6 +84,7 @@ router.put('/update/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 // chercher clien 
 // GET /clients/search?query=xxx
 router.get('/search', async (req, res) => {
@@ -111,6 +112,17 @@ router.get('/search', async (req, res) => {
     console.error(err);
     res.status(500).json({ message: err.message });
   }
+});
+router.get('/:id', async (req, res) => {
+    try {
+        const client = await Client.findById(req.params.id);
+        if (!client) {
+            return res.status(404).json({ message: "Client introuvable" });
+        }
+        res.json(client);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    } 
 });
 
 
