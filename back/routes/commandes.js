@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Commande = require("../models/commande");
 const Client = require("../models/client");
+const facture = require('../models/facture');
 
 router.post('/add', async (req, res) => {
   try {
@@ -111,19 +112,20 @@ router.put('/valider/:id', async (req, res) => {
     if (clientExiste.soldeCompte < commande.montantTotal) {
       // Paiement partiel ou aucun paiement
       if (clientExiste.soldeCompte > 0) {
-        commande.statut = 'partiellement_payee';
+        facture.statut = 'partiellement_payee';
         commande.montantRestant = commande.montantTotal - clientExiste.soldeCompte;
         clientExiste.soldeCompte = 0;
       } else {
-        commande.statut = 'validee';
+        facture.statut = 'impayee';
         commande.montantRestant = commande.montantTotal;
       }
     } else {
       // Paiement complet
       clientExiste.soldeCompte -= commande.montantTotal;
       commande.montantRestant = 0;
-      commande.statut = 'payee';
+      facture.statut = 'payee';
     }
+    commande.statut = 'validee';
 
     commande.dateValidation = new Date();
     
