@@ -60,7 +60,8 @@
                 <i class="bi bi-telephone"></i> {{ facture.client?.telephone }}
               </p>
               <p class="mb-1" *ngIf="facture.client?.adresse">
-                <i class="bi bi-geo-alt"></i> {{ facture.client?.adresse }}
+                <i class="bi bi-geo-alt"></i>
+                {{facture.client?.adresse.codePostal +" "+ facture.client?.adresse.ville +" " + facture.client?.adresse.pays}}
               </p>
             </div>
           </div>
