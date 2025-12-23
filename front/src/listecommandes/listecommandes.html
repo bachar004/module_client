@@ -1,0 +1,260 @@
+<div class="container-fluid p-4">
+  <div class="header-section mb-4">
+    <h2 class="page-title">
+      <i class="bi bi-bag-check"></i> Gestion des Commandes
+    </h2>
+    <button class="btn btn-primary" routerLink="/commandes/new">
+      <i class="bi bi-plus-circle"></i> Nouvelle Commande
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section mb-4">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <input 
+          type="text" 
+          class="form-control" 
+          placeholder="Rechercher par numéro ou client..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+        />
+      </div>
+      <div class="col-md-3">
+        <select 
+          class="form-select" 
+          [(ngModel)]="filtreStatut"
+          (change)="onFiltreChange()"
+        >
+          <option value="tous">Tous les statuts</option>
+          <option value="en_attente">En attente</option>
+          <option value="validee">Validées</option>
+          <option value="annulee">Annulées</option>
+          <option value="en_cours">En cours</option>
+          <option value="livree">Livrées</option>
+        </select>
+      </div>
+      <div class="col-md-5 text-end">
+        <button class="btn btn-outline-secondary" (click)="chargerCommandes()">
+          <i class="bi bi-arrow-clockwise"></i> Actualiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <div class="results-info mb-3">
+      <span class="badge bg-secondary">
+        {{ commandesFiltrees.length }} commande(s)
+      </span>
+    </div>
+
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Numéro</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th>Montant</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let commande of commandesFiltrees">
+          <td class="fw-bold">{{ commande.numeroCommande }}</td>
+          <td>
+            {{ commande.client?.prenom }} {{ commande.client?.nom }}
+          </td>
+          <td>{{ commande.dateCommande | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="fw-bold">{{ commande.montantTotal | number:'1.2-2' }} DT</td>
+          <td>
+            <span 
+              class="badge" 
+              [ngClass]="getStatutClass(commande.statut)"
+            >
+              {{ getStatutLibelle(commande.statut) }}
+            </span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button 
+                class="btn btn-outline-info" 
+                (click)="voirDetails(commande)"
+                title="Détails"
+              >
+                <i class="bi bi-eye"></i>
+              </button>
+              <button 
+                *ngIf="commande.statut === 'en_attente'"
+                class="btn btn-outline-success" 
+                (click)="validerCommande(commande)"
+                title="Valider"
+              >
+                <i class="bi bi-check-circle"></i>
+              </button>
+              <button 
+                *ngIf="commande.statut !== 'annulee' && commande.statut !== 'livree'"
+                class="btn btn-outline-warning" 
+                (click)="ouvrirModalAnnulation(commande)"
+                title="Annuler"
+              >
+                <i class="bi bi-x-circle"></i>
+              </button>
+              <button 
+                class="btn btn-outline-danger" 
+                (click)="supprimerCommande(commande._id!)"
+                title="Supprimer"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="commandesFiltrees.length === 0">
+          <td colspan="6" class="text-center py-5 text-muted">
+            <i class="bi bi-inbox" style="font-size: 48px;"></i>
+            <p class="mt-3">Aucune commande trouvée</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Détails -->
+<div class="modal" [class.show]="showDetailModal" *ngIf="showDetailModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-receipt"></i> 
+          Détails Commande {{ commandeSelectionnee?.numeroCommande }}
+        </h5>
+        <button type="button" class="btn-close" (click)="fermerModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="commandeSelectionnee">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Client:</strong><br>
+            {{ commandeSelectionnee.client?.prenom }} {{ commandeSelectionnee.client?.nom }}<br>
+            <small class="text-muted">{{ commandeSelectionnee.client?.email }}</small>
+          </div>
+          <div class="col-md-6">
+            <strong>Date:</strong><br>
+            {{ commandeSelectionnee.dateCommande | date:'dd/MM/yyyy HH:mm' }}<br>
+            <span 
+              class="badge mt-1" 
+              [ngClass]="getStatutClass(commandeSelectionnee.statut)"
+            >
+              {{ getStatutLibelle(commandeSelectionnee.statut) }}
+            </span>
+          </div>
+        </div>
+
+        <hr>
+
+        <h6 class="mb-3">Articles commandés</h6>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Prix unitaire</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let article of commandeSelectionnee.articles">
+              <td>{{ article.produit }}</td>
+              <td>{{ article.quantite }}</td>
+              <td>{{ article.prixUnitaire | number:'1.2-2' }} DT</td>
+              <td class="fw-bold">{{ article.total | number:'1.2-2' }} DT</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="table-primary">
+              <td colspan="3" class="text-end fw-bold">TOTAL</td>
+              <td class="fw-bold">
+                {{ commandeSelectionnee.montantTotal | number:'1.2-2' }} DT
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div *ngIf="commandeSelectionnee.notes" class="mt-3">
+          <strong>Notes:</strong>
+          <p class="text-muted">{{ commandeSelectionnee.notes }}</p>
+        </div>
+
+        <div *ngIf="commandeSelectionnee.statut === 'annulee'" class="alert alert-warning mt-3">
+          <strong>Raison d'annulation:</strong>
+          {{ commandeSelectionnee.raisonAnnulation }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button 
+          *ngIf="commandeSelectionnee?.statut === 'en_attente' && commandeSelectionnee"
+          class="btn btn-success" 
+          (click)="validerCommande(commandeSelectionnee!)"
+        >
+          <i class="bi bi-check-circle"></i> Valider la commande
+        </button>
+        <button class="btn btn-secondary" (click)="fermerModal()">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Annulation -->
+<div class="modal" [class.show]="showAnnulationModal" *ngIf="showAnnulationModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle"></i> Annuler la commande
+        </h5>
+        <button type="button" class="btn-close" (click)="fermerModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p>Vous êtes sur le point d'annuler la commande 
+          <strong>{{ commandeSelectionnee?.numeroCommande }}</strong>
+        </p>
+        <div class="mb-3">
+          <label class="form-label">Raison de l'annulation *</label>
+          <textarea 
+            class="form-control" 
+            rows="3"
+            [(ngModel)]="raisonAnnulation"
+            placeholder="Saisissez la raison de l'annulation..."
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">
+          Annuler
+        </button>
+        <button class="btn btn-warning" (click)="confirmerAnnulation()">
+          <i class="bi bi-x-circle"></i> Confirmer l'annulation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showDetailModal || showAnnulationModal"></div>
