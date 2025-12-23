@@ -94,22 +94,77 @@ router.put('/valider/:id', async (req, res) => {
       });
     }
 
-    commande.statut = 'validee';
+    // Récupérer le client
+    const clientExiste = await Client.findById(commande.client);
+    if (!clientExiste) {
+      return res.status(404).json({ message: "Client introuvable" });
+    }
+
+    // Vérifier le statut du client
+    if (clientExiste.statut !== 'actif') {
+      return res.status(400).json({ 
+        message: "Le client n'est pas actif. Validation refusée." 
+      });
+    }
+
+    // Déterminer le statut de paiement et mettre à jour le solde
+    if (clientExiste.soldeCompte < commande.montantTotal) {
+      // Paiement partiel ou aucun paiement
+      if (clientExiste.soldeCompte > 0) {
+        commande.statut = 'partiellement_payee';
+        commande.montantRestant = commande.montantTotal - clientExiste.soldeCompte;
+        clientExiste.soldeCompte = 0;
+      } else {
+        commande.statut = 'validee';
+        commande.montantRestant = commande.montantTotal;
+      }
+    } else {
+      // Paiement complet
+      clientExiste.soldeCompte -= commande.montantTotal;
+      commande.montantRestant = 0;
+      commande.statut = 'payee';
+    }
+
     commande.dateValidation = new Date();
     
+    // Sauvegarder les modifications
     await commande.save();
+    await clientExiste.save();
+
+    // Créer la facture
+    const Facture = require("../models/facture");
+    const nouvelleFacture = new Facture({
+      commande: commande._id,
+      client: commande.client,
+      montantTotal: commande.montantTotal,
+      montantPaye: commande.montantTotal - commande.montantRestant,
+      soldeRestant: commande.montantRestant
+    });
+    
+    // Déterminer le statut de la facture
+    if (nouvelleFacture.soldeRestant === 0) {
+      nouvelleFacture.statut = 'payee';
+    } else if (nouvelleFacture.montantPaye > 0) {
+      nouvelleFacture.statut = 'partiellement_payee';
+    } else {
+      nouvelleFacture.statut = 'impayee';
+    }
+
+    await nouvelleFacture.save();
+
+    // Récupérer la commande complète avec le client
     const commandeComplete = await Commande.findById(commande._id)
       .populate('client');
 
     res.json({
       message: "Commande validée avec succès",
-      commande: commandeComplete
+      commande: commandeComplete,
+      facture: nouvelleFacture
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
-
 router.put('/annuler/:id', async (req, res) => {
   try {
     const { raisonAnnulation } = req.body;
