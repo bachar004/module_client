@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -16,4 +16,5 @@ constructor(private router: Router) {}
       this.currentUrl = this.router.url;
     });
   }
+
 }

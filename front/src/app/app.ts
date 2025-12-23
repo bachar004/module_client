@@ -11,4 +11,5 @@ import { Topbar } from '../topbar/topbar';
 })
 export class App {
   protected readonly title = signal('front');
+  
 }
