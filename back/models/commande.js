@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+const counterSchema = new mongoose.Schema({
+  name: { type: String, unique: true },
+  seq: { type: Number, default: 0 }
+});
+
+const Counter = mongoose.models.Counter || mongoose.model("Counter", counterSchema);
+
+
 // Schéma pour les articles de la commande
 const articleCommandeSchema = new mongoose.Schema(
   {
@@ -80,12 +88,18 @@ const commandeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Génération automatique du numéro de commande AVANT la validation
-commandeSchema.pre('validate', async function() {
-  if (this.isNew && !this.numeroCommande) {
-    const count = await mongoose.model('commandes').countDocuments();
-    this.numeroCommande = `CMD${String(count + 1).padStart(6, '0')}`;
+commandeSchema.pre("save", async function(next) {
+  if (!this.numeroCommande) {
+    const counter = await Counter.findOneAndUpdate(
+      { name: "commande" },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    this.numeroCommande = `CMD${String(counter.seq).padStart(6, "0")}`;
   }
+  
 });
+
 
 module.exports = mongoose.model("commandes", commandeSchema);

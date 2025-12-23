@@ -1,6 +1,12 @@
 // models/facture.js
 const mongoose = require("mongoose");
 
+const counterSchema = new mongoose.Schema({
+  name: { type: String, unique: true },
+  seq: { type: Number, default: 0 }
+});
+
+const Counter = mongoose.models.Counter || mongoose.model("Counter", counterSchema);
 const factureSchema = new mongoose.Schema({
   numeroFacture: {
     type: String,
@@ -47,13 +53,20 @@ const factureSchema = new mongoose.Schema({
   timestamps: true
 });
 
-factureSchema.pre('save', async function(next) {
-  if (this.isNew && !this.numeroFacture) {
-    const count = await mongoose.model('factures').countDocuments();
-    this.numeroFacture = `FAC${String(count + 1).padStart(6, '0')}`;
+factureSchema.pre("validate", async function(next) {
+  if (!this.numeroFacture) {
+    const counter = await Counter.findOneAndUpdate(
+      { name: "facture" },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+
+    this.numeroFacture = `FAC${String(counter.seq).padStart(6, "0")}`;
   }
+
   this.soldeRestant = this.montantTotal - this.montantPaye;
-  next();
+  
 });
+
 
 module.exports = mongoose.model("factures", factureSchema);
