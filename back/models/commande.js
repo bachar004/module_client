@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// Schéma pour les articles de la commande
 const articleCommandeSchema = new mongoose.Schema(
   {
     produit: {
@@ -24,10 +25,10 @@ const articleCommandeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Schéma principal de la commande
 const commandeSchema = new mongoose.Schema({
   numeroCommande: {
     type: String,
-    required: true,
     unique: true
   },
   
@@ -79,12 +80,12 @@ const commandeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-commandeSchema.pre('save', async function(next) {
+// Génération automatique du numéro de commande AVANT la validation
+commandeSchema.pre('validate', async function() {
   if (this.isNew && !this.numeroCommande) {
     const count = await mongoose.model('commandes').countDocuments();
     this.numeroCommande = `CMD${String(count + 1).padStart(6, '0')}`;
   }
-  next();
 });
 
 module.exports = mongoose.model("commandes", commandeSchema);
