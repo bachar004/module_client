@@ -93,7 +93,7 @@ router.get('/search', async (req, res) => {
 
     // Si la query est vide, retourner tous les clients
     if (!query) {
-      const clients = await Client.find().limit(20); // limite à 50 résultats
+      const clients = await Client.find().limit(15); // limite à 50 résultats
       return res.json(clients);
     }
 
