@@ -16,7 +16,7 @@ router.post('/add', async (req, res) => {
 //lister client 
 router.get('/findall', async (req, res) => {
   try {
-    const clients = await Client.find().limit(15);
+    const clients = await Client.find().limit(25);
     console.log("Clients récupérés:", clients.length);
     res.json(clients);
   } catch (err) {
