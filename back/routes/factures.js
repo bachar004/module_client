@@ -3,6 +3,7 @@ const router = express.Router();
 const Facture = require("../models/facture");
 const Paiement = require("../models/paiement");
 const Client = require("../models/client");
+const { model } = require('mongoose');
 
 // ==================== FACTURES ROUTES ====================
 
@@ -71,11 +72,12 @@ router.get('/findall', async (req, res) => {
         
         const totalFactures = await Facture.countDocuments(filter);
         const factures = await Facture.find(filter)
-            .populate('client')
-            .populate('commande')
+            .populate({ path: 'client', model: 'clients' })
+            .populate({ path: 'commande', model: 'commandes' })
             .sort({ dateFacture: -1 })
             .skip(skip)
             .limit(limitNumber);
+
         
         res.json({
             factures,
@@ -95,8 +97,9 @@ router.get('/findall', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const facture = await Facture.findById(req.params.id)
-            .populate('client')
-            .populate('commande');
+            .populate({ path: 'client', model: 'clients' })
+            .populate({ path: 'commande', model: 'commandes' });
+
         if (!facture) {
             return res.status(404).json({ message: "Facture introuvable" });
         }
@@ -169,11 +172,13 @@ router.get('/paiements/findall', async (req, res) => {
         
         const totalPaiements = await Paiement.countDocuments(filter);
         const paiements = await Paiement.find(filter)
-            .populate('facture')
-            .populate('client')
+            .populate({ path: 'facture', model: 'facture' })
+            .populate({ path: 'client', model: 'clients' })
             .sort({ datePaiement: -1 })
             .skip(skip)
             .limit(limitNumber);
+
+
         
         res.json({
             paiements,
@@ -188,16 +193,20 @@ router.get('/paiements/findall', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-
 // Add payment for a client
 router.post('/paiements/:id', async (req, res) => {
     try {
         const { client: clientId, montantPaiement, modePaiement } = req.body;
         
+        console.log('=== DÉBUT PAIEMENT ===');
+        console.log('Body reçu:', req.body);
+        
         const client = await Client.findById(clientId);
         if (!client) {
             return res.status(404).json({ message: "Client introuvable" });
         }
+        
+        console.log('Client trouvé:', client.nom, client.prenom);
         
         if (!montantPaiement || montantPaiement <= 0) {
             return res.status(400).json({ message: "Montant de paiement invalide" });
@@ -208,48 +217,84 @@ router.post('/paiements/:id', async (req, res) => {
             statut: { $in: ["impayee", "partiellement_payee"] }
         }).sort({ dateFacture: 1 });
         
-        const anciensolde = client.soldeCompte;
-        let nouveausolde = anciensolde + montantPaiement;
-        client.soldeCompte = nouveausolde;
-        await client.save();
+        console.log('Factures impayées trouvées:', factureImpayee.length);
         
-        if (factureImpayee.length === 0) {
-            return res.status(200).json({
-                message: "Aucune facture impayée pour ce client",
-                montant_reçu: montantPaiement,
-                nouveausolde: nouveausolde,
-                anciensolde: anciensolde
-            });
-        }
+        const anciensolde = client.soldeCompte;
+        let montantRestant = montantPaiement;
         
         const paiementcreated = [];
         const facturesMisesAJour = [];
         
+        // CAS 1: Pas de factures impayées - créer un paiement de crédit
+        if (factureImpayee.length === 0) {
+            console.log('Aucune facture impayée - création d\'un paiement créditeur');
+            
+            // Créer un paiement sans facture (crédit client)
+            const paiementCredit = new Paiement({
+                client: clientId,
+                montant: montantPaiement,
+                modePaiement: modePaiement || "especes",
+                datePaiement: new Date(),
+                notes: "Paiement en avance - Crédit client"
+            });
+            
+            try {
+                const savedPaiement = await paiementCredit.save();
+                console.log('✓ Paiement créditeur sauvegardé avec ID:', savedPaiement._id);
+                paiementcreated.push(savedPaiement);
+            } catch (saveError) {
+                console.error('✗ ERREUR lors de la sauvegarde du paiement créditeur:', saveError);
+                throw saveError;
+            }
+            
+            client.soldeCompte = anciensolde + montantPaiement;
+            await client.save();
+            
+            return res.status(200).json({
+                message: "Paiement enregistré comme crédit client (aucune facture impayée)",
+                paiements: paiementcreated,
+                montant_recu: montantPaiement,
+                nouveausolde: client.soldeCompte,
+                anciensolde: anciensolde
+            });
+        }
+        
+        // CAS 2: Il y a des factures impayées
         for (const facture of factureImpayee) {
-            if (client.soldeCompte <= 0) break;
+            if (montantRestant <= 0) break;
             
-            const montant_a_payer = Math.min(facture.soldeRestant, client.soldeCompte);
+            const montant_a_payer = Math.min(facture.soldeRestant, montantRestant);
             
-            const paiement = new Paiement({
+            console.log(`\n--- Traitement facture ${facture.numeroFacture} ---`);
+            console.log('Montant à payer:', montant_a_payer);
+            
+            const paiementData = {
                 facture: facture._id,
-                client: client._id,
+                client: clientId,
                 montant: montant_a_payer,
                 modePaiement: modePaiement || "especes",
                 datePaiement: new Date()
-            });
-            await paiement.save();
-            paiementcreated.push(paiement);
+            };
+            
+            try {
+                const paiement = new Paiement(paiementData);
+                const savedPaiement = await paiement.save();
+                console.log('✓ Paiement sauvegardé avec ID:', savedPaiement._id);
+                paiementcreated.push(savedPaiement);
+            } catch (saveError) {
+                console.error('✗ ERREUR lors de la sauvegarde du paiement:', saveError);
+                throw saveError;
+            }
             
             facture.montantPaye += montant_a_payer;
             facture.soldeRestant = facture.montantTotal - facture.montantPaye;
             
             if (facture.soldeRestant === 0) {
                 facture.statut = "payee";
-                facture.modePaiement = modePaiement || "especes";
             } else {
                 facture.statut = "partiellement_payee";
-                facture.modePaiement = modePaiement || "especes";
             }
+            facture.modePaiement = modePaiement || "especes";
             await facture.save();
             
             facturesMisesAJour.push({
@@ -260,10 +305,17 @@ router.post('/paiements/:id', async (req, res) => {
                 soldeRestant: facture.soldeRestant
             });
             
-            client.soldeCompte -= montant_a_payer;
+            montantRestant -= montant_a_payer;
         }
         
+        
+        
+        client.soldeCompte = anciensolde + montantRestant;
         await client.save();
+        
+        console.log('\n=== RÉSULTAT FINAL ===');
+        console.log('Paiements créés:', paiementcreated.length);
+        console.log('Nouveau solde:', client.soldeCompte);
         
         res.json({
             message: "Paiement(s) enregistré(s) avec succès",
@@ -273,6 +325,69 @@ router.post('/paiements/:id', async (req, res) => {
             nouveausolde: client.soldeCompte,
             anciensolde: anciensolde
         });
+    } catch (err) {
+        console.error('=== ERREUR GLOBALE ===');
+        console.error('Message:', err.message);
+        console.error('Stack:', err.stack);
+        res.status(500).json({ 
+            message: err.message,
+            error: err.toString()
+        });
+    }
+});
+// Get payment history for a specific facture
+router.get('/:id/paiements', async (req, res) => {
+    try {
+        const factureId = req.params.id;
+        
+        // Verify facture exists
+        const facture = await Facture.findById(factureId);
+        if (!facture) {
+            return res.status(404).json({ message: "Facture introuvable" });
+        }
+        
+        // Get all payments for this facture
+        const paiements = await Paiement.find({ facture: factureId })
+            .populate({ path: 'client', model: 'clients', select: 'nom prenom' })
+            .sort({ datePaiement: -1 });
+
+        
+        res.json({
+            facture: {
+                numeroFacture: facture.numeroFacture,
+                montantTotal: facture.montantTotal,
+                montantPaye: facture.montantPaye,
+                soldeRestant: facture.soldeRestant,
+                statut: facture.statut
+            },
+            historiquePaiements: paiements,
+            totalPaiements: paiements.length
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get single payment details by ID
+router.get('/paiements/:id', async (req, res) => {
+    try {
+        const paiement = await Paiement.findById(req.params.id)
+            .populate({
+                path: 'client',
+                model: 'clients',
+                select: 'nom prenom email telephone adresse'
+            })
+            .populate({
+                path: 'facture',
+                model: 'facture',
+                select: 'numeroFacture montantTotal montantPaye soldeRestant statut dateFacture modePaiement'
+            });
+
+        if (!paiement) {
+            return res.status(404).json({ message: "Paiement introuvable" });
+        }
+        
+        res.json(paiement);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

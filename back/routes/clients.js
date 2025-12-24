@@ -16,7 +16,8 @@ router.post('/add', async (req, res) => {
 //lister client 
 router.get('/findall', async (req, res) => {
   try {
-    const clients = await Client.find().limit(25);
+    const clients = await Client.find().limit(50);
+
     console.log("Clients récupérés:", clients.length);
     res.json(clients);
   } catch (err) {
@@ -113,17 +114,7 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-router.get('/:id', async (req, res) => {
-    try {
-        const client = await Client.findById(req.params.id);
-        if (!client) {
-            return res.status(404).json({ message: "Client introuvable" });
-        }
-        res.json(client);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    } 
-});
+
 
 
 

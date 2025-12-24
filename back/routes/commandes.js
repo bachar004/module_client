@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Commande = require("../models/commande");
 const Client = require("../models/client");
-const facture = require('../models/facture');
+const Facture = require('../models/facture');
+const Paiement = require("../models/paiement");
 
 router.post('/add', async (req, res) => {
   try {
@@ -108,51 +109,60 @@ router.put('/valider/:id', async (req, res) => {
       });
     }
 
-    // Déterminer le statut de paiement et mettre à jour le solde
-    if (clientExiste.soldeCompte < commande.montantTotal) {
-      // Paiement partiel ou aucun paiement
-      if (clientExiste.soldeCompte > 0) {
-        facture.statut = 'partiellement_payee';
-        commande.montantRestant = commande.montantTotal - clientExiste.soldeCompte;
-        clientExiste.soldeCompte = 0;
-      } else {
-        facture.statut = 'impayee';
-        commande.montantRestant = commande.montantTotal;
-      }
-    } else {
-      // Paiement complet
-      clientExiste.soldeCompte -= commande.montantTotal;
-      commande.montantRestant = 0;
-      facture.statut = 'payee';
-    }
-    commande.statut = 'validee';
+    // Calculer les montants en fonction du solde client
+    let montantPaye = 0;
+    let montantRestant = commande.montantTotal;
+    let statutFacture = 'impayee';
 
+    if (clientExiste.soldeCompte > 0) {
+      if (clientExiste.soldeCompte >= commande.montantTotal) {
+        // Paiement complet
+        montantPaye = commande.montantTotal;
+        montantRestant = 0;
+        statutFacture = 'payee';
+        clientExiste.soldeCompte -= commande.montantTotal;
+      } else {
+        // Paiement partiel
+        montantPaye = clientExiste.soldeCompte;
+        montantRestant = commande.montantTotal - clientExiste.soldeCompte;
+        statutFacture = 'partiellement_payee';
+        clientExiste.soldeCompte = 0;
+      }
+    }
+
+    // Mettre à jour la commande
+    commande.statut = 'validee';
     commande.dateValidation = new Date();
-    
-    // Sauvegarder les modifications
+    commande.montantRestant = montantRestant;
     await commande.save();
+
+    // Sauvegarder le client
     await clientExiste.save();
 
     // Créer la facture
-    const Facture = require("../models/facture");
     const nouvelleFacture = new Facture({
       commande: commande._id,
       client: commande.client,
       montantTotal: commande.montantTotal,
-      montantPaye: commande.montantTotal - commande.montantRestant,
-      soldeRestant: commande.montantRestant
+      montantPaye: montantPaye,
+      soldeRestant: montantRestant,
+      statut: statutFacture
     });
-    
-    // Déterminer le statut de la facture
-    if (nouvelleFacture.soldeRestant === 0) {
-      nouvelleFacture.statut = 'payee';
-    } else if (nouvelleFacture.montantPaye > 0) {
-      nouvelleFacture.statut = 'partiellement_payee';
-    } else {
-      nouvelleFacture.statut = 'impayee';
-    }
 
     await nouvelleFacture.save();
+
+    // Créer un paiement si de l'argent a été déduit du solde
+    if (montantPaye > 0) {
+      const paiement = new Paiement({
+        facture: nouvelleFacture._id,
+        client: commande.client,
+        montant: montantPaye,
+        modePaiement: "solde_compte",
+        datePaiement: new Date(),
+        notes: "Paiement automatique depuis le solde du compte"
+      });
+      await paiement.save();
+    }
 
     // Récupérer la commande complète avec le client
     const commandeComplete = await Commande.findById(commande._id)
@@ -161,12 +171,16 @@ router.put('/valider/:id', async (req, res) => {
     res.json({
       message: "Commande validée avec succès",
       commande: commandeComplete,
-      facture: nouvelleFacture
+      facture: nouvelleFacture,
+      montantPaye: montantPaye,
+      nouveauSoldeClient: clientExiste.soldeCompte
     });
   } catch (err) {
+    console.error('Erreur lors de la validation:', err);
     res.status(400).json({ message: err.message });
   }
 });
+
 router.put('/annuler/:id', async (req, res) => {
   try {
     const { raisonAnnulation } = req.body;
