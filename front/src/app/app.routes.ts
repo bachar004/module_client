@@ -7,6 +7,8 @@ import { Nouvellecommande } from '../nouvellecommande/nouvellecommande';
 import { ListeFacturesComponent } from '../liste-factures/liste-factures';
 import { DetailsFactureComponent } from '../details-facture/details-facture';
 import { PaiementFactureComponent } from '../paiement-facture/paiement-facture';
+import { Listepaiements } from '../listepaiements/listepaiements';
+import { Detailspaiement } from '../detailspaiement/detailspaiement';
 
 export const routes: Routes = [
   {
@@ -20,6 +22,8 @@ export const routes: Routes = [
       {path:'factures/list',component:ListeFacturesComponent},
       {path:'factures/details/:id',component:DetailsFactureComponent},
       {path:'factures/paiement/:id',component:PaiementFactureComponent},
+      {  path: 'paiements',  component: Listepaiements},
+      { path: 'paiements/details/:id', component: Detailspaiement },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

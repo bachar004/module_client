@@ -1,0 +1,361 @@
+<div class="container-fluid p-4">
+  <!-- En-tête -->
+  <div class="header-section mb-4">
+    <h2 class="page-title">
+      <i class="bi bi-cash-stack"></i> Détails du Paiement
+    </h2>
+    <div>
+      <button class="btn btn-outline-secondary me-2" (click)="retour()">
+        <i class="bi bi-arrow-left"></i> Retour
+      </button>
+      <button class="btn btn-outline-primary" (click)="imprimerRecu()">
+        <i class="bi bi-printer"></i> Imprimer le reçu
+      </button>
+    </div>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-2">Chargement du paiement...</p>
+  </div>
+
+  <!-- Contenu du paiement -->
+  <div *ngIf="!loading && paiement" class="row">
+    <div class="col-lg-8">
+      <!-- Informations principales du paiement -->
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-check-circle"></i> Informations du Paiement
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p class="mb-2">
+                <strong>Date et heure:</strong><br>
+                <span class="fs-5">{{ paiement.datePaiement | date:'dd/MM/yyyy à HH:mm:ss' }}</span>
+              </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <p class="mb-2">
+                <strong>Montant payé:</strong><br>
+                <span class="fs-3 text-success">
+                  <strong>{{ paiement.montant | number:'1.2-2' }} DT</strong>
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-2">
+                <strong>Mode de paiement:</strong>
+                <span 
+                  class="badge ms-2 fs-6" 
+                  [ngClass]="getModePaiementBadgeClass(paiement.modePaiement)"
+                >
+                  {{ getModePaiementLabel(paiement.modePaiement) }}
+                </span>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-2">
+                <strong>ID Paiement:</strong><br>
+                <code class="text-muted">{{ paiement._id }}</code>
+              </p>
+            </div>
+          </div>
+
+          <div *ngIf="paiement.notes" class="mt-3">
+            <p class="mb-2">
+              <strong>Notes:</strong><br>
+              <span class="text-muted">{{ paiement.notes }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations de la facture -->
+      <div class="card mb-4" *ngIf="paiement.facture">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-receipt"></i> Facture Associée
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-2">
+                <strong>Numéro de facture:</strong><br>
+                <a 
+                  href="javascript:void(0)" 
+                  (click)="voirFacture()"
+                  class="text-decoration-none fs-5"
+                >
+                  <strong>{{ paiement.facture?.numeroFacture }}</strong>
+                </a>
+              </p>
+              <p class="mb-2">
+                <strong>Date facture:</strong><br>
+                {{ paiement.facture?.dateFacture | date:'dd/MM/yyyy' }}
+              </p>
+              <p class="mb-2">
+                <strong>Statut:</strong>
+                <span 
+                  class="badge ms-2" 
+                  [ngClass]="getStatutBadgeClass(paiement.facture?.statut)"
+                >
+                  {{ getStatutLabel(paiement.facture?.statut) }}
+                </span>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <div class="financial-summary p-3 bg-light rounded">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Montant total:</span>
+                  <strong>{{ paiement.facture?.montantTotal | number:'1.2-2' }} DT</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2 text-success">
+                  <span>Montant payé:</span>
+                  <strong>{{ paiement.facture?.montantPaye | number:'1.2-2' }} DT</strong>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between">
+                  <span><strong>Solde restant:</strong></span>
+                  <strong class="text-danger">
+                    {{ paiement.facture?.soldeRestant | number:'1.2-2' }} DT
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <button 
+              class="btn btn-outline-primary" 
+              (click)="voirFacture()"
+            >
+              <i class="bi bi-eye"></i> Voir la facture complète
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paiement crédit sans facture -->
+      <div class="card mb-4" *ngIf="!paiement.facture">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-wallet2"></i> Crédit Client
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle me-2"></i>
+            Ce paiement a été enregistré comme crédit client (aucune facture impayée au moment du paiement).
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique des paiements de la facture -->
+      <div class="card" *ngIf="paiement.facture && historiquePaiements.length > 0">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-clock-history"></i> Historique des Paiements
+            <span class="badge bg-primary ms-2">{{ historiquePaiements.length }}</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Résumé -->
+          <div class="alert alert-light mb-3">
+            <div class="row text-center">
+              <div class="col-md-4">
+                <small class="text-muted">Total payé</small>
+                <div class="fs-5 text-success">
+                  <strong>{{ getTotalPaiements() | number:'1.2-2' }} DT</strong>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Nombre de paiements</small>
+                <div class="fs-5">
+                  <strong>{{ historiquePaiements.length }}</strong>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Reste à payer</small>
+                <div class="fs-5 text-danger">
+                  <strong>{{ facture?.soldeRestant | number:'1.2-2' }} DT</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des paiements -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Montant</th>
+                  <th>Mode</th>
+                  <th>Client</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  *ngFor="let p of historiquePaiements"
+                  [class.table-success]="isPaiementActuel(p._id)"
+                >
+                  <td>
+                    {{ p.datePaiement | date:'dd/MM/yyyy HH:mm' }}
+                    <span 
+                      *ngIf="isPaiementActuel(p._id)" 
+                      class="badge bg-success ms-2"
+                    >
+                      Actuel
+                    </span>
+                  </td>
+                  <td>
+                    <strong class="text-success">
+                      {{ p.montant | number:'1.2-2' }} DT
+                    </strong>
+                  </td>
+                  <td>
+                    <span 
+                      class="badge" 
+                      [ngClass]="getModePaiementBadgeClass(p.modePaiement)"
+                    >
+                      {{ getModePaiementLabel(p.modePaiement) }}
+                    </span>
+                  </td>
+                  <td>
+                    <small>{{ p.client?.prenom }} {{ p.client?.nom }}</small>
+                  </td>
+                  <td>
+                    <button 
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="voirPaiement(p._id)"
+                      [disabled]="isPaiementActuel(p._id)"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar - Informations client -->
+    <div class="col-lg-4">
+      <!-- Informations client -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-person"></i> Client
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-3">
+            <div class="avatar-placeholder mb-2">
+              <i class="bi bi-person-circle display-1 text-muted"></i>
+            </div>
+            <h5 class="mb-1">
+              {{ paiement.client?.prenom }} {{ paiement.client?.nom }}
+            </h5>
+          </div>
+
+          <hr>
+
+          <div class="client-info">
+            <p class="mb-2">
+              <i class="bi bi-envelope text-muted me-2"></i>
+              <small>{{ paiement.client?.email }}</small>
+            </p>
+            <p class="mb-2" *ngIf="paiement.client?.telephone">
+              <i class="bi bi-telephone text-muted me-2"></i>
+              <small>{{ paiement.client?.telephone }}</small>
+            </p>
+            <p class="mb-2" *ngIf="paiement.client?.adresse">
+              <i class="bi bi-geo-alt text-muted me-2"></i>
+              <small>
+                {{ paiement.client?.adresse.rue }}, 
+                {{ paiement.client?.adresse.ville }} 
+                {{ paiement.client?.adresse.codePostal }}
+              </small>
+            </p>
+          </div>
+
+          <button 
+            class="btn btn-outline-primary w-100 mt-3" 
+            (click)="voirClient()"
+          >
+            <i class="bi bi-eye"></i> Voir le profil client
+          </button>
+        </div>
+      </div>
+
+      <!-- Reçu de paiement -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="bi bi-file-text"></i> Reçu de Paiement
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="receipt-box p-3 border rounded">
+            <div class="text-center mb-3">
+              <h6 class="mb-0">REÇU DE PAIEMENT</h6>
+              <small class="text-muted">{{ paiement.datePaiement | date:'dd/MM/yyyy HH:mm' }}</small>
+            </div>
+            
+            <hr>
+            
+            <div class="receipt-details">
+              <div class="d-flex justify-content-between mb-2" *ngIf="paiement.facture">
+                <small>Facture:</small>
+                <small><strong>{{ paiement.facture?.numeroFacture }}</strong></small>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <small>Client:</small>
+                <small><strong>{{ paiement.client?.nom }}</strong></small>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <small>Mode:</small>
+                <small><strong>{{ getModePaiementLabel(paiement.modePaiement) }}</strong></small>
+              </div>
+              
+              <hr class="my-2">
+              
+              <div class="d-flex justify-content-between">
+                <strong>Montant:</strong>
+                <strong class="text-success">{{ paiement.montant | number:'1.2-2' }} DT</strong>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            class="btn btn-success w-100 mt-3" 
+            (click)="imprimerRecu()"
+          >
+            <i class="bi bi-printer"></i> Imprimer le reçu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -46,7 +46,7 @@ const factureSchema = new mongoose.Schema({
   },
   modePaiement: {
     type: String,
-    enum: ["especes", "carte", "virement", "cheque"],
+    enum: ["especes", "carte", "virement", "cheque", "solde_compte"],
     default: null
   }
 }, {
@@ -69,4 +69,4 @@ factureSchema.pre("validate", async function(next) {
 });
 
 
-module.exports = mongoose.model("factures", factureSchema);
+module.exports = mongoose.model("facture", factureSchema);
