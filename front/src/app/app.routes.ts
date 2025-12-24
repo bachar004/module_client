@@ -1,18 +1,29 @@
 import { Routes } from '@angular/router';
-import { App } from './app';
 import { Dashboard } from '../dashboard/dashboard';
 import { Listeclients } from '../listeclients/listeclients';
 import { Newclient } from '../newclient/newclient';
-
+import { Listecommandes } from '../listecommandes/listecommandes';
+import { Nouvellecommande } from '../nouvellecommande/nouvellecommande';
+import { ListeFacturesComponent } from '../liste-factures/liste-factures';
+import { DetailsFactureComponent } from '../details-facture/details-facture';
+import { PaiementFactureComponent } from '../paiement-facture/paiement-facture';
+import { Listepaiements } from '../listepaiements/listepaiements';
+import { Detailspaiement } from '../detailspaiement/detailspaiement';
 
 export const routes: Routes = [
-     {
+  {
     path: '',
     children: [
       { path: 'dashboard', component: Dashboard },
       { path: 'clients/list', component: Listeclients },
-      { path: 'clients/new', component: Newclient},
-      
+      { path: 'clients/new', component: Newclient },
+      { path: 'commandes/list', component: Listecommandes },
+      { path: 'commandes/new', component: Nouvellecommande },
+      {path:'factures/list',component:ListeFacturesComponent},
+      {path:'factures/details/:id',component:DetailsFactureComponent},
+      {path:'factures/paiement/:id',component:PaiementFactureComponent},
+      {  path: 'paiements',  component: Listepaiements},
+      { path: 'paiements/details/:id', component: Detailspaiement },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

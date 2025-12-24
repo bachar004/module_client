@@ -1,0 +1,54 @@
+/* Shared styles for both files */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.stat-card {
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+
+.financial-summary {
+  background-color: #f8f9fa;
+}
+
+.avatar-placeholder {
+  text-align: center;
+}
+
+.receipt-box {
+  background-color: #f8f9fa;
+}
+
+.client-info p {
+  display: flex;
+  align-items: center;
+}
+
+@media print {
+  .btn, .header-section button, nav {
+    display: none !important;
+  }
+  
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}

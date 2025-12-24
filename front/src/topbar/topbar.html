@@ -1,5 +1,8 @@
-<div class="topbar">
-  <div class="left">
+<div class="topbar d-flex align-items-center justify-content-between px-3">
+  <div class="left d-flex align-items-center">
+    <!-- Bouton toggle visible sur mobile -->
+    <button class="menu-toggle me-2">☰</button>
+
     <h5 class="page-title">
       <span *ngIf="currentUrl.includes('dashboard')">Dashboard</span>
       <span *ngIf="currentUrl.includes('clients')">Clients</span>
@@ -9,17 +12,11 @@
       <span *ngIf="currentUrl.includes('rapports')">Rapports</span>
     </h5>
   </div>
-  <div class="right">
-    <input
-      type="text"
-      class="search"
-      placeholder="Rechercher..."
-    />
 
+  <div class="right">
     <div class="profile">
       <i class="bi bi-person-circle"></i>
       <span class="username">Admin</span>
     </div>
   </div>
 </div>
-

@@ -1,0 +1,304 @@
+<div class="container-fluid p-4">
+  <!-- En-tête -->
+  <div class="header-section mb-4">
+    <h2 class="page-title">
+      <i class="bi bi-cash-stack"></i> Gestion des Paiements
+    </h2>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card stat-card border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Total Paiements</h6>
+              <h3 class="mb-0">{{ stats.total }}</h3>
+            </div>
+            <i class="bi bi-receipt stat-icon text-primary"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Montant Total</h6>
+              <h3 class="mb-0">{{ stats.montantTotal | number:'1.2-2' }} DT</h3>
+            </div>
+            <i class="bi bi-cash-coin stat-icon text-success"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card border-info">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Par Espèces</h6>
+              <h3 class="mb-0">{{ stats.parEspeces | number:'1.2-2' }} DT</h3>
+            </div>
+            <i class="bi bi-wallet2 stat-icon text-info"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card border-warning">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Par Carte</h6>
+              <h3 class="mb-0">{{ stats.parCarte | number:'1.2-2' }} DT</h3>
+            </div>
+            <i class="bi bi-credit-card stat-icon text-warning"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-funnel"></i> Filtres
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- Recherche -->
+        <div class="col-md-4">
+          <label class="form-label">Recherche</label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Numéro facture, client..."
+              [(ngModel)]="filtreRecherche"
+              (ngModelChange)="appliquerFiltreRecherche()"
+            />
+          </div>
+        </div>
+
+        <!-- Mode de paiement -->
+        <div class="col-md-4">
+          <label class="form-label">Mode de paiement</label>
+          <select 
+            class="form-select" 
+            [(ngModel)]="filtreModePaiement"
+          >
+            <option value="">Tous les modes</option>
+            <option value="especes">Espèces</option>
+            <option value="carte">Carte bancaire</option>
+            <option value="virement">Virement</option>
+            <option value="cheque">Chèque</option>
+          </select>
+        </div>
+
+        <!-- Date début -->
+        <div class="col-md-2">
+          <label class="form-label">Date début</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="filtreDateDebut"
+          />
+        </div>
+
+        <!-- Date fin -->
+        <div class="col-md-2">
+          <label class="form-label">Date fin</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="filtreDateFin"
+          />
+        </div>
+
+        <!-- Montant min -->
+        <div class="col-md-3">
+          <label class="form-label">Montant minimum</label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              class="form-control" 
+              placeholder="0.00"
+              [(ngModel)]="filtreMontantMin"
+            />
+            <span class="input-group-text">DT</span>
+          </div>
+        </div>
+
+        <!-- Montant max -->
+        <div class="col-md-3">
+          <label class="form-label">Montant maximum</label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              class="form-control" 
+              placeholder="0.00"
+              [(ngModel)]="filtreMontantMax"
+            />
+            <span class="input-group-text">DT</span>
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="col-md-6">
+          <label class="form-label">&nbsp;</label>
+          <div class="d-flex gap-2">
+            <button 
+              class="btn btn-primary flex-fill" 
+              (click)="appliquerFiltres()"
+            >
+              <i class="bi bi-search"></i> Rechercher
+            </button>
+            <button 
+              class="btn btn-outline-secondary flex-fill" 
+              (click)="reinitialiserFiltres()"
+            >
+              <i class="bi bi-x-circle"></i> Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-2">Chargement des paiements...</p>
+  </div>
+
+  <!-- Liste des paiements -->
+  <div *ngIf="!loading" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Liste des paiements</h5>
+      <span class="badge bg-secondary">{{ totalPaiements }} paiement(s)</span>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Facture</th>
+              <th>Client</th>
+              <th>Montant</th>
+              <th>Mode de paiement</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let paiement of paiementsFiltres">
+              <td>
+                <div>
+                  <strong>{{ paiement.datePaiement | date:'dd/MM/yyyy' }}</strong>
+                </div>
+                <small class="text-muted">{{ paiement.datePaiement | date:'HH:mm' }}</small>
+              </td>
+              <td>
+                <a 
+                  href="javascript:void(0)" 
+                  (click)="voirFacture(paiement.facture?._id)"
+                  class="text-decoration-none"
+                >
+                  <strong>{{ paiement.facture?.numeroFacture || 'Balance' }}</strong>
+                </a>
+                <div>
+                  <small class="text-muted">
+                    Total: {{ paiement.facture?.montantTotal || '0.00' }} DT
+                  </small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <strong>{{ paiement.client?.prenom }} {{ paiement.client?.nom }}</strong>
+                </div>
+                <small class="text-muted">{{ paiement.client?.email }}</small>
+              </td>
+              <td>
+                <strong class="text-success">{{ paiement.montant | number:'1.2-2' }} DT</strong>
+              </td>
+              <td>
+                <span 
+                  class="badge" 
+                  [ngClass]="getModePaiementBadgeClass(paiement.modePaiement)"
+                >
+                  {{ getModePaiementLabel(paiement.modePaiement) }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button 
+                    class="btn btn-outline-primary" 
+                    (click)="voirDetails(paiement._id)"
+                    title="Voir détails"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  
+                    
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="paiementsFiltres.length === 0" class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <p class="mt-3 text-muted">Aucun paiement trouvé</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="card-footer">
+      <nav>
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item" [class.disabled]="page === 1">
+            <a class="page-link" href="javascript:void(0)" (click)="pagePrecedente()">
+              <i class="bi bi-chevron-left"></i> Précédent
+            </a>
+          </li>
+          
+          <li 
+            class="page-item" 
+            *ngFor="let p of [].constructor(totalPages); let i = index"
+            [class.active]="page === i + 1"
+          >
+            <a class="page-link" href="javascript:void(0)" (click)="allerALaPage(i + 1)">
+              {{ i + 1 }}
+            </a>
+          </li>
+          
+          <li class="page-item" [class.disabled]="page === totalPages">
+            <a class="page-link" href="javascript:void(0)" (click)="pageSuivante()">
+              Suivant <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <p class="text-center text-muted mt-2 mb-0">
+        Page {{ page }} sur {{ totalPages }} ({{ totalPaiements }} paiement(s) au total)
+      </p>
+    </div>
+  </div>
+</div>

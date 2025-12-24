@@ -1,0 +1,196 @@
+<div class="container-fluid p-4">
+  <!-- En-tête -->
+  <div class="header-section mb-4">
+    <h2 class="page-title">
+      <i class="bi bi-receipt"></i> Gestion des Factures
+    </h2>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''"></button>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="row mb-4">
+    <div class="col-6 col-xl-3 mb-2">
+      <div class="card stat-card border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Total Factures</h6>
+              <h3 class="mb-0">{{ stats.total }}</h3>
+            </div>
+            <i class="bi bi-file-text stat-icon text-primary"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3 mb-2">
+      <div class="card stat-card border-danger">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Impayées</h6>
+              <h3 class="mb-0">{{ stats.impayees }}</h3>
+            </div>
+            <i class="bi bi-exclamation-circle stat-icon text-danger"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3 mb-2">
+      <div class="card stat-card border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Montant Payé</h6>
+              <h3 class="mb-0">{{ stats.montantPaye | number:'1.2-2' }} DT</h3>
+            </div>
+            <i class="bi bi-cash-coin stat-icon text-success"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3 mb-2">
+      <div class="card stat-card border-warning">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Solde Restant</h6>
+              <h3 class="mb-0">{{ stats.soldeRestant | number:'1.2-2' }} DT</h3>
+            </div>
+            <i class="bi bi-hourglass-split stat-icon text-warning"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Rechercher par numéro ou client..."
+              [(ngModel)]="filtreRecherche"
+              (ngModelChange)="appliquerFiltres()"
+            />
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="filtreStatut" id="tous" 
+              [checked]="filtreStatut === ''" (change)="changerFiltreStatut('')">
+            <label class="btn btn-outline-secondary" for="tous">
+              Toutes ({{ stats.total }})
+            </label>
+
+            <input type="radio" class="btn-check" name="filtreStatut" id="impayee" 
+              [checked]="filtreStatut === 'impayee'" (change)="changerFiltreStatut('impayee')">
+            <label class="btn btn-outline-danger" for="impayee">
+              Impayées ({{ stats.impayees }})
+            </label>
+
+            <input type="radio" class="btn-check" name="filtreStatut" id="partielle" 
+              [checked]="filtreStatut === 'partiellement_payee'" (change)="changerFiltreStatut('partiellement_payee')">
+            <label class="btn btn-outline-warning" for="partielle">
+              Partielles ({{ stats.partiellementPayees }})
+            </label>
+
+            <input type="radio" class="btn-check" name="filtreStatut" id="payee" 
+              [checked]="filtreStatut === 'payee'" (change)="changerFiltreStatut('payee')">
+            <label class="btn btn-outline-success" for="payee">
+              Payées ({{ stats.payees }})
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-2">Chargement des factures...</p>
+  </div>
+
+  <!-- Liste des factures -->
+  <div *ngIf="!loading" class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Numéro</th>
+              <th>Client</th>
+              <th>Date</th>
+              <th>Montant Total</th>
+              <th>Montant Payé</th>
+              <th>Solde Restant</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let facture of facturesFiltrees">
+              <td>
+                <strong>{{ facture.numeroFacture }}</strong>
+              </td>
+              <td>
+                <div>
+                  <strong>{{ facture.client?.prenom }} {{ facture.client?.nom }}</strong>
+                </div>
+                <small class="text-muted">{{ facture.client?.email }}</small>
+              </td>
+              <td>{{ facture.dateFacture | date:'dd/MM/yyyy' }}</td>
+              <td><strong>{{ facture.montantTotal | number:'1.2-2' }} DT</strong></td>
+              <td class="text-success">{{ facture.montantPaye | number:'1.2-2' }} DT</td>
+              <td class="text-danger">
+                <strong>{{ facture.soldeRestant | number:'1.2-2' }} DT</strong>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatutBadgeClass(facture.statut)">
+                  {{ getStatutLabel(facture.statut) }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button 
+                    class="btn btn-outline-primary" 
+                    (click)="voirDetails(facture._id)"
+                    title="Voir détails"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button 
+                    class="btn btn-outline-success" 
+                    (click)="effectuerPaiement(facture)"
+                    title="Effectuer un paiement"
+                  >
+                    <i class="bi bi-credit-card"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="facturesFiltrees.length === 0" class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <p class="mt-3 text-muted">Aucune facture trouvée</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
