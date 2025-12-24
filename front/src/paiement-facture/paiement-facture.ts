@@ -116,7 +116,7 @@ export class PaiementFactureComponent implements OnInit {
   }
 
   retour(): void {
-    this.router.navigate(['/factures']);
+    this.router.navigate(['/factures/list']);
   }
 
   getStatutBadgeClass(statut: string): string {
