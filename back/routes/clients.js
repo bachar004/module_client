@@ -114,6 +114,16 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+router.get('/chercher/:id', async (req, res) => {
+  try {
+    const client = await Client.findById(req.params.id);
+    if (!client) return res.status(404).json({ message: "Client non trouvé" });
+    res.json(client);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 
 

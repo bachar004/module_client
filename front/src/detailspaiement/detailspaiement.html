@@ -210,7 +210,7 @@
                   <th>Montant</th>
                   <th>Mode</th>
                   <th>Client</th>
-                  <th>Actions</th>
+                  
                 </tr>
               </thead>
               <tbody>
@@ -244,13 +244,7 @@
                     <small>{{ p.client?.prenom }} {{ p.client?.nom }}</small>
                   </td>
                   <td>
-                    <button 
-                      class="btn btn-sm btn-outline-primary"
-                      (click)="voirPaiement(p._id)"
-                      [disabled]="isPaiementActuel(p._id)"
-                    >
-                      <i class="bi bi-eye"></i>
-                    </button>
+                   
                   </td>
                 </tr>
               </tbody>
@@ -300,12 +294,7 @@
             </p>
           </div>
 
-          <button 
-            class="btn btn-outline-primary w-100 mt-3" 
-            (click)="voirClient()"
-          >
-            <i class="bi bi-eye"></i> Voir le profil client
-          </button>
+          
         </div>
       </div>
 

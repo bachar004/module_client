@@ -41,7 +41,7 @@ export class PaiementFactureComponent implements OnInit {
   }
 
   chargerClient(): void {
-    this.clientsService.getClientById(this.clientId).subscribe({
+    this.clientsService.chercherClientById(this.clientId).subscribe({
       next: (data) => {
         this.client = data;
       },
@@ -63,6 +63,7 @@ export class PaiementFactureComponent implements OnInit {
           ['impayee', 'partiellement_payee'].includes(f.statut)
         );
         this.loading = false;
+        this.client = this.factures.length > 0 ? this.factures[0].client : this.client;
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des factures';

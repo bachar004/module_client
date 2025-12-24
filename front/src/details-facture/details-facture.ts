@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router} from '@angular/router';
 import { FactureService } from '../services/facture.service';
 import { CommonModule } from '@angular/common';
 
@@ -44,7 +44,7 @@ export class DetailsFactureComponent implements OnInit {
   }
 
   retour(): void {
-    this.router.navigate(['/factures']);
+    this.router.navigate(['/factures/list']);
   }
 
   effectuerPaiement(): void {
