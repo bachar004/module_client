@@ -71,4 +71,29 @@ export class FactureService {
     });
     return this.http.get(`${this.apiUrl}/findall`, { params });
   }
+  // Add these methods to your FactureService
+
+  getAllPaiements(params: any = {}): Observable<any> {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(params).forEach(key => {
+      if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key].toString());
+      }
+    });
+    
+    const queryString = queryParams.toString();
+    const url = queryString 
+      ? `${this.apiUrl}/paiements/findall?${queryString}`
+      : `${this.apiUrl}/paiements/findall`;
+      
+    return this.http.get<any>(url);
+  }
+
+  getPaiementById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/paiements/${id}`);
+  }
+  getPaiementsFacture(factureId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${factureId}/paiements`);
+  }
 }

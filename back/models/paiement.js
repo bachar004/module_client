@@ -4,7 +4,12 @@ const mongoose = require("mongoose");
 const paiementSchema = new mongoose.Schema({
   facture: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'factures',
+    ref: 'facture',
+    required: true
+  },
+  client: {                       // <- add this
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'clients',
     required: true
   },
   montant: {
@@ -14,7 +19,7 @@ const paiementSchema = new mongoose.Schema({
   },
   modePaiement: {
     type: String,
-    enum: ["especes", "carte", "virement", "cheque"],
+    enum: ["especes", "carte", "virement", "cheque", "solde_compte"],
     required: true
   },
   datePaiement: {
