@@ -1,0 +1,82 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Gestion des Réclamations (SAV)</h2>
+    <a routerLink="/tickets/new" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nouveau Ticket
+    </a>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <input type="text" class="form-control" placeholder="Rechercher par client, référence ou titre..."
+        [(ngModel)]="searchTerm">
+    </div>
+    <div class="col-md-4">
+      <select class="form-select" [(ngModel)]="statusFilter">
+        <option value="">Tous les statuts</option>
+        <option value="OUVERT">Ouvert</option>
+        <option value="EN_COURS">En cours</option>
+        <option value="RESOLU">Résolu</option>
+        <option value="CLOS">Clos</option>
+        <option value="ARCHIVE">Archivé</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && tickets.length === 0" class="alert alert-info">
+    Aucun ticket trouvé.
+  </div>
+
+  <div *ngIf="!loading && tickets.length > 0 && filteredTickets.length === 0" class="alert alert-warning">
+    Aucun résultat pour votre recherche.
+  </div>
+
+  <div *ngIf="!loading && filteredTickets.length > 0" class="card shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Référence</th>
+            <th>Client</th>
+            <th>Titre</th>
+            <th>Date</th>
+            <th>Assigné à</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticket of filteredTickets">
+            <td><strong>{{ ticket.reference }}</strong></td>
+            <td>
+              <span *ngIf="ticket.client">{{ ticket.client.nom }} {{ ticket.client.prenom }}</span>
+              <span *ngIf="!ticket.client" class="text-muted">Inconnu</span>
+            </td>
+            <td>{{ ticket.titre }}</td>
+            <td>{{ ticket.dateCreation | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <span *ngIf="ticket.agent">{{ ticket.agent }}</span>
+              <span *ngIf="!ticket.agent" class="text-muted fst-italic">Non assigné</span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="'status-' + ticket.statut">
+                {{ ticket.statut }}
+              </span>
+            </td>
+            <td>
+              <a [routerLink]="['/tickets/details', ticket._id]" class="btn btn-sm btn-outline-primary">
+                Voir détails
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

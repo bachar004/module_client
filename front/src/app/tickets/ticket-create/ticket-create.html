@@ -1,0 +1,49 @@
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Soumettre une Réclamation</h4>
+                </div>
+                <div class="card-body">
+                    <form (ngSubmit)="onSubmit()">
+
+                        <div class="mb-3">
+                            <label for="client" class="form-label">Client (Simulé)</label>
+                            <select class="form-select" id="client" [(ngModel)]="ticket.clientId" name="clientId"
+                                required>
+                                <option value="" disabled selected>Sélectionnez un client...</option>
+                                <option *ngFor="let client of clients" [value]="client._id">
+                                    {{ client.nom }} {{ client.prenom }} ({{ client.email }})
+                                </option>
+                            </select>
+                            <div class="form-text">Dans une app réelle, ce champ serait auto-rempli par l'utilisateur
+                                connecté.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="titre" class="form-label">Objet de la réclamation</label>
+                            <input type="text" class="form-control" id="titre" [(ngModel)]="ticket.titre" name="titre"
+                                required placeholder="Ex: Problème de livraison">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description détaillée du problème</label>
+                            <textarea class="form-control" id="description" rows="5" [(ngModel)]="ticket.description"
+                                name="description" required></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a routerLink="/tickets/list" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary" [disabled]="submitting">
+                                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+                                Envoyer la réclamation
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
