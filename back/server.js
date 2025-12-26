@@ -3,7 +3,11 @@ const cors = require('cors');
 require('dotenv').config();
 const app = express();
 
-const bd=require("./database/connexion")
+const bd = require("./database/connexion")
+
+// Register models explicitly to avoid Schema hasn't been registered errors
+require('./models/client');
+require('./models/ticket');
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +26,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-    console.log(`Serveur démarré sur le port ${process.env.PORT}`)
+  console.log(`Serveur démarré sur le port ${process.env.PORT}`)
 }
 );

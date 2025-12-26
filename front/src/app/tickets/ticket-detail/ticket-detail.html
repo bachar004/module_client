@@ -1,0 +1,139 @@
+<div class="container mt-4" *ngIf="ticket">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="mb-1">
+                <span class="badge" [ngClass]="getStatusClass(ticket.statut)">{{ ticket.statut }}</span>
+                {{ ticket.titre }}
+            </h2>
+            <p class="text-muted">Réf: {{ ticket.reference }} | Créé le {{ ticket.dateCreation | date:'medium' }}</p>
+        </div>
+        <a routerLink="/tickets/list" class="btn btn-outline-secondary">Retour</a>
+    </div>
+
+    <div class="row">
+        <!-- Main Content: Description & Comments -->
+        <div class="col-md-8">
+            <!-- Description -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Description du problème</h5>
+                    <p class="card-text">{{ ticket.description }}</p>
+                    <div *ngIf="ticket.client" class="text-muted small">
+                        Soumis par: {{ ticket.client.nom }} {{ ticket.client.prenom }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interaction / Commentaires -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="true" href="#">Conversation</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <!-- Liste des commentaires -->
+                    <div class="comments-list mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <div *ngFor="let comment of ticket.commentaires" class="comment-box"
+                            [ngClass]="{'bg-internal': comment.type === 'INTERNAL'}">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ comment.user }}</strong>
+                                <small class="text-muted">{{ comment.date | date:'short' }}</small>
+                            </div>
+                            <p class="mb-1">{{ comment.content }}</p>
+                            <span *ngIf="comment.type === 'INTERNAL'" class="badge bg-warning text-dark"
+                                style="font-size: 0.7em;">Interne</span>
+                        </div>
+                        <div *ngIf="ticket.commentaires.length === 0" class="text-muted text-center py-3">
+                            Aucune interaction pour le moment.
+                        </div>
+                    </div>
+
+                    <!-- Ajout commentaire -->
+                    <div *ngIf="ticket.statut !== 'CLOS' && ticket.statut !== 'ARCHIVE'">
+                        <div class="mb-2">
+                            <textarea class="form-control" rows="3" placeholder="Écrire une réponse..."
+                                [(ngModel)]="newComment"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check form-switch" title="Visible uniquement par les agents">
+                                <input class="form-check-input" type="checkbox" id="internalCheck"
+                                    [ngModel]="commentType === 'INTERNAL'"
+                                    (ngModelChange)="$event ? commentType = 'INTERNAL' : commentType = 'EXTERNAL'">
+                                <label class="form-check-label" for="internalCheck">Note interne</label>
+                            </div>
+                            <button class="btn btn-primary btn-sm" (click)="addComment()"
+                                [disabled]="!newComment">Envoyer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Actions & History -->
+        <div class="col-md-4">
+            <!-- Actions Agent -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">Actions SAV</div>
+                <div class="card-body">
+
+                    <!-- Assignation -->
+                    <div class="mb-3" *ngIf="!ticket.agent">
+                        <label class="form-label small">Assigner un agent</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Nom agent" [(ngModel)]="agentName">
+                            <button class="btn btn-outline-primary" type="button" (click)="assignAgent()">OK</button>
+                        </div>
+                    </div>
+                    <div class="mb-3" *ngIf="ticket.agent">
+                        <small class="text-muted">Agent en charge:</small>
+                        <div class="fw-bold">{{ ticket.agent }}</div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Changement Statut -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-warning btn-sm" *ngIf="ticket.statut === 'OUVERT'"
+                            (click)="updateStatus('EN_COURS')">
+                            <i class="bi bi-play-fill"></i> Prendre en charge (En cours)
+                        </button>
+                        <button class="btn btn-success btn-sm" *ngIf="ticket.statut === 'EN_COURS'"
+                            (click)="updateStatus('RESOLU')">
+                            <i class="bi bi-check-lg"></i> Marquer comme Résolu
+                        </button>
+                        <button class="btn btn-danger btn-sm" *ngIf="ticket.statut === 'RESOLU'"
+                            (click)="updateStatus('CLOS')">
+                            <i class="bi bi-lock-fill"></i> Clôturer le ticket
+                        </button>
+                        <button class="btn btn-secondary btn-sm" *ngIf="ticket.statut === 'CLOS'"
+                            (click)="updateStatus('ARCHIVE')">
+                            Archiver
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            <div class="card shadow-sm">
+                <div class="card-header">Historique</div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        <li *ngFor="let item of ticket.historique" class="timeline-item">
+                            <div class="small fw-bold">{{ item.action }}</div>
+                            <div class="small text-muted">{{ item.date | date:'short' }} - {{ item.user }}</div>
+                            <div class="small fst-italic">{{ item.details }}</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="loading" class="text-center mt-5">
+    <div class="spinner-border" role="status"></div>
+</div>
