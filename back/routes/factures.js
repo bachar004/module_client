@@ -4,6 +4,8 @@ const Facture = require("../models/facture");
 const Paiement = require("../models/paiement");
 const Client = require("../models/client");
 const { model } = require('mongoose');
+require('../jobs/job'); 
+const { deleteEcheance } = require('../jobs/job');
 
 // ==================== FACTURES ROUTES ====================
 
@@ -291,6 +293,7 @@ router.post('/paiements/:id', async (req, res) => {
             
             if (facture.soldeRestant === 0) {
                 facture.statut = "payee";
+                await deleteEcheance(facture._id);
             } else {
                 facture.statut = "partiellement_payee";
             }
@@ -309,8 +312,11 @@ router.post('/paiements/:id', async (req, res) => {
         }
         
         
+        if (montantRestant > 0) {
+            client.statut = 'actif';
+            client.soldeCompte += montantRestant;
+        }
         
-        client.soldeCompte = anciensolde + montantRestant;
         await client.save();
         
         console.log('\n=== RÉSULTAT FINAL ===');

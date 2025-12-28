@@ -4,6 +4,7 @@ const Commande = require("../models/commande");
 const Client = require("../models/client");
 const Facture = require('../models/facture');
 const Paiement = require("../models/paiement");
+const { createEcheance } = require('../jobs/job');
 
 router.post('/add', async (req, res) => {
   try {
@@ -150,6 +151,10 @@ router.put('/valider/:id', async (req, res) => {
     });
 
     await nouvelleFacture.save();
+
+    if (statutFacture !== 'payee') {
+      await createEcheance(nouvelleFacture);
+    }
 
     // Créer un paiement si de l'argent a été déduit du solde
     if (montantPaye > 0) {
