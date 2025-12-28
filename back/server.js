@@ -20,6 +20,7 @@ app.use('/api/commandes', require('./routes/commandes'));
 app.use('/api/factures', require('./routes/factures'));
 app.use('/api/tickets', require('./routes/tickets'));
 
+require('./jobs/job'); 
 // Route de test
 app.get('/', (req, res) => {
   res.json({ message: 'API ERP Module Client' });
