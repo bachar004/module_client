@@ -1,0 +1,150 @@
+<div class="dashboard-container">
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement du tableau de bord...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div *ngIf="error && !loading" class="error-state">
+    <p>{{ error }}</p>
+    <button (click)="loadDashboard()">Réessayer</button>
+  </div>
+
+  <!-- DASHBOARD CONTENT -->
+  <div *ngIf="dashboardData && !loading && !error">
+
+    <!-- KEY METRICS -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <h3>Revenu Total</h3>
+        <p class="metric-value">{{ formatCurrency(dashboardData.metrics.totalRevenue) }}</p>
+        <span class="metric-change"
+              [class.positive]="calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) > 0"
+              [class.negative]="calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) < 0">
+          {{ calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) }}% vs mois dernier
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <h3>Clients Actifs</h3>
+        <p class="metric-value">{{ dashboardData.metrics.activeClients }}</p>
+        <span class="metric-info">
+          {{ dashboardData.monthlyComparison.thisMonth.newClients }} nouveaux ce mois
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <h3>Commandes en cours</h3>
+        <p class="metric-value">{{ dashboardData.metrics.pendingOrders }}</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>Factures Impayées</h3>
+        <p class="metric-value">{{ formatCurrency(dashboardData.metrics.unpaidInvoices.amount) }}</p>
+        <span class="metric-info">{{ dashboardData.metrics.unpaidInvoices.count }} facture(s)</span>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="alerts-section" *ngIf="dashboardData.alerts">
+      <h2>Alertes</h2>
+      <div class="alerts-grid">
+        <div class="alert-card alert-danger" *ngIf="dashboardData.alerts.overdueInvoices > 0">
+          <span class="alert-count">{{ dashboardData.alerts.overdueInvoices }}</span>
+          <span class="alert-label">Factures en retard</span>
+        </div>
+
+        <div class="alert-card alert-warning" *ngIf="dashboardData.alerts.openTickets > 0">
+          <span class="alert-count">{{ dashboardData.alerts.openTickets }}</span>
+          <span class="alert-label">Tickets ouverts</span>
+        </div>
+
+        <div class="alert-card alert-info" *ngIf="dashboardData.alerts.ordersAwaitingValidation > 0">
+          <span class="alert-count">{{ dashboardData.alerts.ordersAwaitingValidation }}</span>
+          <span class="alert-label">Commandes en attente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP CLIENTS -->
+    <div class="top-clients-section" *ngIf="dashboardData.topClients && dashboardData.topClients.length > 0">
+      <h2>Top 5 Clients</h2>
+      <table class="clients-table">
+        <thead>
+        <tr>
+          <th>Rang</th>
+          <th>Client</th>
+          <th>Revenu Total</th>
+          <th>Commandes</th>
+          <th>Dernière Commande</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let client of dashboardData.topClients; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>{{ client.clientInfo.nom }} {{ client.clientInfo.prenom }}</td>
+          <td>{{ formatCurrency(client.totalRevenue) }}</td>
+          <td>{{ client.orderCount }}</td>
+          <td>{{ client.lastOrder[0]?.dateCommande | date:'dd/MM/yyyy' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MONTHLY COMPARISON -->
+    <div class="comparison-section">
+      <h2>Comparaison Mensuelle</h2>
+      <div class="comparison-grid">
+        <div class="comparison-column">
+          <h3>Ce Mois</h3>
+          <div class="stat-item">
+            <span class="stat-label">Nouveaux clients</span>
+            <span class="stat-value">{{ dashboardData.monthlyComparison.thisMonth.newClients }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Nouvelles commandes</span>
+            <span class="stat-value">{{ dashboardData.monthlyComparison.thisMonth.newOrders }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Revenu</span>
+            <span class="stat-value">{{ formatCurrency(getThisMonthRevenue()) }}</span>
+          </div>
+        </div>
+
+        <div class="comparison-column">
+          <h3>Mois Dernier</h3>
+          <div class="stat-item">
+            <span class="stat-label">Nouveaux clients</span>
+            <span class="stat-value">{{ dashboardData.monthlyComparison.lastMonth.newClients }}</span>
+            <span class="stat-change"
+                  [class.positive]="calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newClients, dashboardData.monthlyComparison.lastMonth.newClients) > 0"
+                  [class.negative]="calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newClients, dashboardData.monthlyComparison.lastMonth.newClients) < 0">
+              {{ calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newClients, dashboardData.monthlyComparison.lastMonth.newClients) > 0 ? '+' : '' }}{{ calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newClients, dashboardData.monthlyComparison.lastMonth.newClients) }}%
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Nouvelles commandes</span>
+            <span class="stat-value">{{ dashboardData.monthlyComparison.lastMonth.newOrders }}</span>
+            <span class="stat-change"
+                  [class.positive]="calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newOrders, dashboardData.monthlyComparison.lastMonth.newOrders) > 0"
+                  [class.negative]="calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newOrders, dashboardData.monthlyComparison.lastMonth.newOrders) < 0">
+              {{ calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newOrders, dashboardData.monthlyComparison.lastMonth.newOrders) > 0 ? '+' : '' }}{{ calculatePercentageChange(dashboardData.monthlyComparison.thisMonth.newOrders, dashboardData.monthlyComparison.lastMonth.newOrders) }}%
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Revenu</span>
+            <span class="stat-value">{{ formatCurrency(getLastMonthRevenue()) }}</span>
+            <span class="stat-change"
+                  [class.positive]="calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) > 0"
+                  [class.negative]="calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) < 0">
+              {{ calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) > 0 ? '+' : '' }}{{ calculatePercentageChange(getThisMonthRevenue(), getLastMonthRevenue()) }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
