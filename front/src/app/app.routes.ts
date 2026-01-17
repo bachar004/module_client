@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { Dashboard } from '../dashboard/dashboard';
+import { DashboardComponent } from '../dashboard/dashboard.component';
 import { Listeclients } from '../listeclients/listeclients';
 import { Newclient } from '../newclient/newclient';
 import { Listecommandes } from '../listecommandes/listecommandes';
@@ -17,7 +17,7 @@ export const routes: Routes = [
   {
     path: '',
     children: [
-      { path: 'dashboard', component: Dashboard },
+      { path: 'dashboard', component: DashboardComponent },
       { path: 'clients/list', component: Listeclients },
       { path: 'clients/new', component: Newclient },
       { path: 'commandes/list', component: Listecommandes },
